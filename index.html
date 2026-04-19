@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d0806" />
+  <meta name="color-scheme" content="dark" />
+  <title>Wedding Invitation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    body {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      min-height: 100svh;
+      min-height: 100dvh;
+      overflow: hidden;
+      overscroll-behavior: none;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      background: radial-gradient(ellipse 120% 80% at 50% 40%, #2a1810 0%, #0d0806 55%, #050302 100%);
+      color: #e8dcc8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scene {
+      width: 100%;
+      max-width: 100vw;
+      min-height: 100%;
+      min-height: 100svh;
+      min-height: 100dvh;
+      /* Reserve space for hint + safe areas; scale design (620×460) to fit */
+      --design-w: 620px;
+      --design-h: 460px;
+      --safe-x: max(10px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+      --safe-y: max(6px, env(safe-area-inset-top, 0px), env(safe-area-inset-bottom, 0px));
+      --hint-band: clamp(2.5rem, 11vmin, 5.25rem);
+      --stage-scale: min(
+        1,
+        calc((100vw - var(--safe-x) * 2 - 12px) / var(--design-w)),
+        calc((100dvh - var(--safe-y) * 2 - var(--hint-band) - 14px) / var(--design-h))
+      );
+      perspective: min(1400px, calc(100vw * 2.2));
+      perspective-origin: 50% 42%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(0.25rem, 1.8vmin, 0.85rem);
+      padding-top: max(env(safe-area-inset-top, 0px), 6px);
+      padding-right: max(env(safe-area-inset-right, 0px), 8px);
+      padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+      padding-left: max(env(safe-area-inset-left, 0px), 8px);
+      box-sizing: border-box;
+    }
+
+    .stage-viewport {
+      position: relative;
+      width: calc(var(--design-w) * var(--stage-scale));
+      height: calc(var(--design-h) * var(--stage-scale));
+      max-width: calc(100vw - 16px);
+      max-height: calc(100dvh - var(--hint-band) - var(--safe-y) * 2);
+      flex-shrink: 0;
+    }
+
+    .stage {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 620px;
+      height: 460px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      transform: scale(var(--stage-scale));
+      transform-origin: top left;
+    }
+
+    /* Card appears in place; inner stack does 3D page changes */
+    .card {
+      position: absolute;
+      left: 50%;
+      bottom: 27px;
+      width: 540px;
+      height: 351px;
+      margin-left: -270px;
+      border-radius: 2px;
+      z-index: 1;
+      transform: translateY(0) scale(0.97);
+      opacity: 0;
+      pointer-events: none;
+      transition: none;
+      will-change: transform, opacity;
+      overflow: visible;
+    }
+
+    .card-stack {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      border-radius: 2px;
+      filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.5));
+    }
+
+    .card-panel {
+      position: absolute;
+      inset: 0;
+      border-radius: 2px;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      will-change: transform, opacity;
+    }
+
+    .card-panel img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      border-radius: 2px;
+    }
+
+    .card-panel.is-front {
+      z-index: 2;
+      transform: rotateY(0deg) translateZ(6px);
+      opacity: 1;
+    }
+
+    .card-panel.is-behind {
+      z-index: 0;
+      transform: translateZ(-34px) translateY(10px) scale(0.94);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .card-stack.anim-next .card-panel.is-front {
+      animation: cardPeelToBackNext 0.78s cubic-bezier(0.42, 0, 0.2, 1) forwards;
+    }
+
+    .card-stack.anim-next .card-panel.is-behind {
+      animation: cardRiseFromBackNext 0.78s cubic-bezier(0.33, 1.18, 0.48, 1) forwards;
+    }
+
+    .card-stack.anim-prev .card-panel.is-front {
+      animation: cardPeelToBackPrev 0.78s cubic-bezier(0.42, 0, 0.2, 1) forwards;
+    }
+
+    .card-stack.anim-prev .card-panel.is-behind {
+      animation: cardRiseFromBackPrev 0.78s cubic-bezier(0.33, 1.18, 0.48, 1) forwards;
+    }
+
+    /* Next: current lifts toward viewer, then swings behind stack; next page advances */
+    @keyframes cardPeelToBackNext {
+      0% {
+        transform: rotateY(0deg) translateZ(6px);
+        opacity: 1;
+      }
+      22% {
+        transform: rotateY(-32deg) translateZ(28px) translateY(-18px) scale(1.03);
+        opacity: 1;
+      }
+      100% {
+        transform: rotateY(-168deg) translateZ(-110px) translateY(6px) scale(0.86);
+        opacity: 0.25;
+      }
+    }
+
+    @keyframes cardRiseFromBackNext {
+      0% {
+        transform: translateZ(-34px) translateY(10px) scale(0.94);
+        opacity: 0.7;
+      }
+      18% {
+        transform: rotateY(48deg) translateZ(-72px) translateY(20px) scale(0.9);
+        opacity: 0.72;
+      }
+      48% {
+        transform: rotateY(-10deg) translateZ(18px) translateY(-10px) scale(1.04);
+        opacity: 1;
+      }
+      100% {
+        transform: rotateY(0deg) translateZ(6px) translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* Prev: mirror motion */
+    @keyframes cardPeelToBackPrev {
+      0% {
+        transform: rotateY(0deg) translateZ(6px);
+        opacity: 1;
+      }
+      22% {
+        transform: rotateY(32deg) translateZ(28px) translateY(-18px) scale(1.03);
+        opacity: 1;
+      }
+      100% {
+        transform: rotateY(168deg) translateZ(-110px) translateY(6px) scale(0.86);
+        opacity: 0.25;
+      }
+    }
+
+    @keyframes cardRiseFromBackPrev {
+      0% {
+        transform: translateZ(-34px) translateY(10px) scale(0.94);
+        opacity: 0.7;
+      }
+      18% {
+        transform: rotateY(-48deg) translateZ(-72px) translateY(20px) scale(0.9);
+        opacity: 0.72;
+      }
+      48% {
+        transform: rotateY(10deg) translateZ(18px) translateY(-10px) scale(1.04);
+        opacity: 1;
+      }
+      100% {
+        transform: rotateY(0deg) translateZ(6px) translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    .card.risen {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      transform-style: preserve-3d;
+      transition:
+        transform 1.15s cubic-bezier(0.34, 1.5, 0.64, 1),
+        opacity 0.5s ease-out;
+      z-index: 10;
+    }
+
+    .envelope-slot {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 620px;
+      height: 404px;
+      margin-left: -310px;
+      z-index: 5;
+    }
+
+    .envelope-float {
+      width: 100%;
+      height: 100%;
+      animation: envelopeBreathe 4s ease-in-out infinite;
+      will-change: transform;
+    }
+
+    .envelope-float.paused {
+      animation: none;
+    }
+
+    @keyframes envelopeBreathe {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .envelope-3d {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 1.1s ease-in-out;
+      will-change: transform;
+    }
+
+    .envelope-3d.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .envelope-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+    }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      will-change: transform;
+    }
+
+    .face img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .face.front {
+      transform: rotateY(0deg) translateZ(2px);
+    }
+
+    .face.back {
+      transform: rotateY(180deg) translateZ(2px);
+      background: #1a100c;
+      transform-style: preserve-3d;
+    }
+
+    .back-base {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .back-base img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center bottom;
+    }
+
+    /* Triangular top flap — top band of envelope-back */
+    .flap-wrap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 42%;
+      transform-origin: top center;
+      transform-style: preserve-3d;
+      transition: transform 1s ease-in-out;
+      will-change: transform;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .flap-wrap.open {
+      transform: rotateX(-170deg);
+    }
+
+    .flap-inner {
+      position: absolute;
+      top: 0;
+      left: -5%;
+      width: 110%;
+      height: 130%;
+      clip-path: polygon(50% 100%, 0 0, 100% 0);
+      overflow: hidden;
+    }
+
+    .flap-inner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+
+    .hint {
+      font-size: clamp(0.95rem, 2.8vw + 0.55rem, 1.35rem);
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      text-align: center;
+      text-wrap: balance;
+      max-width: 36rem;
+      padding: 0 max(4px, env(safe-area-inset-left)) 0 max(4px, env(safe-area-inset-right));
+      min-height: 1.45em;
+      line-height: 1.35;
+      animation: hintBreathe 2.8s ease-in-out infinite;
+      will-change: opacity;
+    }
+
+    .hint.hidden {
+      visibility: hidden;
+      animation: none;
+    }
+
+    @keyframes hintBreathe {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 1; }
+    }
+
+    .clickable-envelope {
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .clickable-envelope.done {
+      cursor: default;
+      touch-action: auto;
+    }
+
+    @media (orientation: landscape) and (max-height: 420px) {
+      .scene {
+        --hint-band: clamp(1.75rem, 8vmin, 3rem);
+        gap: 0.15rem;
+      }
+
+      .hint {
+        font-size: clamp(0.8rem, 2.5vh, 1.05rem);
+      }
+    }
+
+    @media (max-width: 380px) {
+      .scene {
+        padding-left: max(env(safe-area-inset-left, 0px), 6px);
+        padding-right: max(env(safe-area-inset-right, 0px), 6px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .envelope-float {
+        animation: none;
+      }
+
+      .hint {
+        animation: none;
+        opacity: 0.9;
+      }
+
+      .envelope-3d,
+      .flap-wrap,
+      .card.risen {
+        transition-duration: 0.01ms !important;
+      }
+
+      .card-stack.anim-next .card-panel.is-front,
+      .card-stack.anim-next .card-panel.is-behind,
+      .card-stack.anim-prev .card-panel.is-front,
+      .card-stack.anim-prev .card-panel.is-behind {
+        animation-duration: 0.2s !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="scene">
+    <div class="stage-viewport">
+      <div class="stage" id="stage">
+      <div class="card" id="card" aria-hidden="true">
+        <div class="card-stack" id="cardStack">
+          <div class="card-panel is-front" id="cardPanel0">
+            <img src="images/card-page-1.jpeg" alt="Invitation page" />
+          </div>
+          <div class="card-panel is-behind" id="cardPanel1">
+            <img src="images/card-page-2.jpeg" alt="" />
+          </div>
+        </div>
+      </div>
+
+      <div class="envelope-slot clickable-envelope" id="envelopeClick" aria-label="Envelope">
+        <div class="envelope-float" id="envelopeFloat">
+          <div class="envelope-3d" id="envelope3d">
+            <div class="envelope-inner">
+            <div class="face front">
+              <img src="images/envelope-front.jpeg" alt="Envelope front" />
+            </div>
+            <div class="face back">
+              <div class="back-base">
+                <img src="images/envelope-back.jpeg" alt="Envelope back" />
+              </div>
+              <div class="flap-wrap" id="flap">
+                <div class="flap-inner">
+                  <img src="images/envelope-back.jpeg" alt="" />
+                </div>
+              </div>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <p class="hint" id="hint">Click to open</p>
+  </div>
+
+  <script>
+    (function () {
+      const CARD_PAGES = [
+        "images/card-page-1.jpeg",
+        "images/card-page-2.jpeg",
+        "images/card-page-3.jpeg",
+        "images/card-page-4.jpeg",
+        "images/card-page-5.jpeg",
+      ];
+
+      let phase = 0; // 0 front, 1 back, 2 opening, 3 reading
+      let pageIndex = 0;
+      let frontPanelIdx = 0; // 0 or 1 — which panel is on top
+      let flipBusy = false;
+      let autoAdvanceTimer = null;
+
+      const envelopeClick = document.getElementById("envelopeClick");
+      const envelopeFloat = document.getElementById("envelopeFloat");
+      const envelope3d = document.getElementById("envelope3d");
+      const flap = document.getElementById("flap");
+      const card = document.getElementById("card");
+      const cardStack = document.getElementById("cardStack");
+      const cardPanel0 = document.getElementById("cardPanel0");
+      const cardPanel1 = document.getElementById("cardPanel1");
+      const hint = document.getElementById("hint");
+
+      function tryEnterFullscreen() {
+        const el = document.documentElement;
+        var req =
+          el.requestFullscreen ||
+          el.webkitRequestFullscreen ||
+          el.msRequestFullscreen;
+        if (req) {
+          req.call(el).catch(function () {});
+        }
+      }
+
+      function panels() {
+        return frontPanelIdx === 0
+          ? { front: cardPanel0, behind: cardPanel1 }
+          : { front: cardPanel1, behind: cardPanel0 };
+      }
+
+      function imgOf(el) {
+        return el.querySelector("img");
+      }
+
+      function applyIdleStack() {
+        const { front, behind } = panels();
+        front.classList.remove("is-behind");
+        front.classList.add("is-front");
+        behind.classList.remove("is-front");
+        behind.classList.add("is-behind");
+        imgOf(front).src = CARD_PAGES[pageIndex];
+        const behindIdx = (pageIndex + 1) % CARD_PAGES.length;
+        imgOf(behind).src = CARD_PAGES[behindIdx];
+      }
+
+      function clearAutoAdvance() {
+        if (autoAdvanceTimer) {
+          window.clearTimeout(autoAdvanceTimer);
+          autoAdvanceTimer = null;
+        }
+      }
+
+      function scheduleAutoAdvance() {
+        clearAutoAdvance();
+        if (phase !== 3) return;
+        autoAdvanceTimer = window.setTimeout(function () {
+          autoAdvanceTimer = null;
+          if (phase === 3 && !flipBusy) {
+            goPage(1);
+          }
+        }, 2000);
+      }
+
+      function goPage(delta) {
+        if (flipBusy) return;
+        if (delta !== 1 && delta !== -1) return;
+        const len = CARD_PAGES.length;
+        if (len < 2) return;
+        clearAutoAdvance();
+        const next = (pageIndex + delta + len) % len;
+
+        const goingNext = delta > 0;
+        const { front, behind } = panels();
+
+        imgOf(behind).src = CARD_PAGES[next];
+
+        flipBusy = true;
+        cardStack.classList.remove("anim-next", "anim-prev");
+        void cardStack.offsetWidth;
+        cardStack.classList.add(goingNext ? "anim-next" : "anim-prev");
+
+        function onAnimEnd(ev) {
+          if (ev.target !== front) return;
+          if (!ev.animationName || ev.animationName.indexOf("cardPeel") !== 0) return;
+          front.removeEventListener("animationend", onAnimEnd);
+          cardStack.classList.remove("anim-next", "anim-prev");
+          frontPanelIdx = 1 - frontPanelIdx;
+          pageIndex = next;
+          applyIdleStack();
+          flipBusy = false;
+          scheduleAutoAdvance();
+        }
+
+        front.addEventListener("animationend", onAnimEnd);
+      }
+
+      function onEnvelopeActivate() {
+        if (phase === 0) {
+          envelope3d.classList.add("flipped");
+          hint.textContent = "Click to unseal";
+          phase = 1;
+          return;
+        }
+        if (phase === 1) {
+          tryEnterFullscreen();
+          phase = 2;
+          envelopeFloat.classList.add("paused");
+          envelopeClick.classList.add("done");
+          envelopeClick.classList.remove("clickable-envelope");
+          envelopeClick.style.cursor = "default";
+          flap.classList.add("open");
+          window.setTimeout(function () {
+            card.classList.add("risen");
+            card.setAttribute("aria-hidden", "false");
+            hint.classList.add("hidden");
+            hint.textContent = "";
+            phase = 3;
+            applyIdleStack();
+            scheduleAutoAdvance();
+          }, 900);
+        }
+      }
+
+      envelopeClick.addEventListener("click", function (e) {
+        if (phase >= 2) return;
+        onEnvelopeActivate();
+      });
+    })();
+  </script>
+</body>
+</html>
